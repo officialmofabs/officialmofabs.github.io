@@ -1,1 +1,3 @@
-# officialmofabs.github.io
+# My Personal Website
+
+View live at [seancoughlin.me](http://seancoughlin.me)

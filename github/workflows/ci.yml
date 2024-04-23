@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  # Can run on command
+  workflow_dispatch:
+  # Can be run by other actions
+  workflow_call:
+  # Runs on pull requests
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: build-and-test
+    # Running on ubuntu-latest, nothing special
+    runs-on: ubuntu-latest
+    steps:
+      # As usual, we simply checkout the project
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Setup the latest version of Bun
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      # Install project dependencies
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # Make sure the application can build
+      - name: Build application
+        run: bun run build
+      # Now we run our tests
+      - name: Run tests
+        run: bun run test
+      # Now we run our lints
+      - name: Run lints
+        run: bun run lint
+      # Now we run our pretty checks for code formatting
+      - name: Run pretty checks
+        run: bun run pretty-check
+      # Finally we run svelte-check for some last minute svelte sanity
+      - name: Run svelte-check
+        run: bun run svelte-check
+
+  test:
+    # Runs on execution of build
+    needs: build
+    name: playwright-test
+    # Running on ubuntu-latest, nothing special
+    runs-on: ubuntu-latest
+    steps:
+      # As usual, we simply checkout the project
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Setup the latest version of Bun
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      # Install project dependencies
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # Install Playwright browsers
+      - name: Install Playwright Browsers
+        run: bunx playwright install --with-deps
+      # Run Playwright tests
+      - name: Run tests
+        run: bun run test:playwright
+
+  analyze:
+    # Runs on successful playwright
+    needs: [build, test]
+    name: lighthouse-test
+    # Running on ubuntu-latest, nothing special
+    runs-on: ubuntu-latest
+    steps:
+      # As usual, we simply checkout the project
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Setup the latest version of Bun
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      # Install project dependencies
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      # Install Playwright browsers
+      - name: Install Playwright Browsers
+        run: bunx playwright install --with-deps
+      # Run Lighthouse Playwright tests
+      - name: Run Playwright tests
+        run: bun run test:lighthouse
